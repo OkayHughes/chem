@@ -30,7 +30,8 @@ if "--" in args:
         )
 
 if sys.argv[1] in submodules:
-    sp = subprocess.Popen(module+sys.argv[2:])
+    argument = " ".join(sys.argv[2:])
+    sp = subprocess.Popen(module+[argument])
     sp.wait()
     
     
