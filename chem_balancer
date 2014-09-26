@@ -1,0 +1,167 @@
+from sympy import *
+import sys, re, string
+
+elems = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Uut', 'Fl', 'Uup', 'Lv', 'Uus', 'Uuo']
+
+(a, b, c, d, e, f, g, h, i, j, k, l, m, n) = S("a b c d e f g h i j k l m n".split())
+
+symbs = [a, b, c, d, e, f, g, h, i, j, k, l, m, n]
+
+inp = sys.argv[1]
+
+inp = inp.replace(' ', '')
+
+reactants = inp[:inp.find("-->")]
+products = inp[inp.find("-->")+3:]
+reactants = reactants.split("+")
+products = products.split("+")
+
+#for reactants
+
+counts = {}
+
+element_re = r"[A-Z][a-z]?(_[0-9]+)?"
+parenthesis_re = r"\(.*\)(_[0-9]+)?"
+
+for ind, i  in enumerate(reactants):
+	symbol = string.ascii_lowercase[ind]
+	term = [i]
+	a = 1
+	while a:
+		a = re.match(parenthesis_re, term[-1])
+		if a:
+			remainder = term[-1][term[-1].find(a.group())+ len(a.group()):]
+			if len(term[-1][:term[0].find(a.group())]) > 0:
+				term[-1] = term[-1][:term[-1].find(a.group())]
+				term += [a.group()]
+			else:
+				term[-1] = a.group()
+
+			term += [remainder]
+
+	if term[-1] == '':
+		term.pop(-1)
+
+	for j in term:
+		segment = j
+		if re.match(parenthesis_re, segment):
+			mult = int(segment[segment[segment.index(")"):].index('_') + segment.index(")")+1:])
+			segment = re.match("\(.*\)", segment).group()[1:-1]
+		else:
+			mult = 1
+		a=1
+		while a:
+			a = re.match(element_re, segment)
+			if not a:
+				break
+			name = a.group()
+			segment = segment[len(name):]
+			if re.match(r"[A-Z][a-z]?(_[0-9]+)", name):
+				subscript = int(name[name.index('_')+1:])
+				elem_name = str(name[:name.index('_')])
+				if elem_name in counts.keys():
+					counts[elem_name].append([symbol, subscript * mult])
+				else:
+					counts[elem_name] = [[symbol, subscript * mult]]
+			else:
+				if name in counts.keys():
+					counts[name].append([symbol, mult])
+				else:
+					counts[name] = [[symbol, mult]]
+
+for ind, i  in enumerate(products):
+	symbol = string.ascii_lowercase[ind+len(reactants)]
+	term = [i]
+	a = 1
+	while a:
+		a = re.match(parenthesis_re, term[-1])
+		if a:
+			remainder = term[-1][term[-1].find(a.group())+ len(a.group()):]
+			if len(term[-1][:term[0].find(a.group())]) > 0:
+				term[-1] = term[-1][:term[-1].find(a.group())]
+				term += [a.group()]
+			else:
+				term[-1] = a.group()
+
+			term += [remainder]
+
+	if term[-1] == '':
+		term.pop(-1)
+
+	for j in term:
+		segment = j
+		if re.match(parenthesis_re, segment):
+			mult = int(segment[segment[segment.index(")"):].index('_') + segment.index(")")+1:])
+			segment = re.match("\(.*\)", segment).group()[1:-1]
+		else:
+			mult = 1
+		a=1
+		while a:
+			a = re.match(element_re, segment)
+			if not a:
+				break
+			name = a.group()
+			segment = segment[len(name):]
+			if re.match(r"[A-Z][a-z]?(_[0-9]+)", name):
+				subscript = int(name[name.index('_')+1:])
+				elem_name = str(name[:name.index('_')])
+				if elem_name in counts.keys():
+					counts[elem_name].append([symbol, subscript * -1 * mult])
+				else:
+					counts[elem_name] = [[symbol, subscript * -1 * mult]]
+			else:
+				if name in counts.keys():
+					counts[name].append([symbol, -1 * mult])
+				else:
+					counts[name] = [[symbol, -1* mult]]
+
+eq = []
+for i in counts.keys():
+	temp_eq=''
+	for j in counts[i]:
+		temp_eq += str(j[1]) + " * " + j[0] + " + "
+	eq.append(temp_eq[:-2])
+
+
+eq = map(Eq, map(sympify, eq))
+
+sol=solve(eq)
+
+
+results = {}
+ct = 1
+
+while 1:
+	s = filter(str.islower, str(sol[sol.keys()[0]]))
+	s = sympify(s[0])
+	for i in sol.keys():
+		tempct = ct
+		while 1:
+			res = sympify(sol[i]).subs(s, ct) 	
+			if res%1 == 0:
+				break
+			ct += 1
+		if tempct != ct:
+			results = {}
+			break
+		results[i] = res
+	if len(results.keys()) == len(sol.keys()):
+		results[s] = ct
+		break
+print results
+ret = ""
+
+result_parsed = [0] * len(results.keys())
+for i in results.keys():
+	result_parsed[list(string.ascii_lowercase).index(str(i))] = results[i]
+
+for i,j in enumerate(reactants):
+	ret += (str(result_parsed[i]) if str(result_parsed[i]) != '1' else '') + reactants[i] + " + "
+ret = ret[:-2] + " --> "
+
+for i,j in enumerate(products):
+	ret += (str(result_parsed[i+len(reactants)]) if str(result_parsed[i+len(reactants)]) != '1' else '')  + products[i] + " + "
+
+print ret[:-2]
+
+
