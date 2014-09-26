@@ -17,7 +17,8 @@ elems = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg',
          'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn',
          'Uut', 'Fl', 'Uup', 'Lv', 'Uus', 'Uuo']
 
-(a, b, c, d, e, f, g, h, i, j, k, l, m, n) = S("a b c d e f g h i j k l m n".split())
+inputs = "a b c d e f g h i j k l m n".split()
+a, b, c, d, e, f, g, h, i, j, k, l, m, n = S(inputs)
 
 symbs = [a, b, c, d, e, f, g, h, i, j, k, l, m, n]
 
@@ -31,21 +32,21 @@ products = formula[1]
 reactants = reactants.split("+")
 products = products.split("+")
 
-#for reactants
+# For reactants
 
 counts = {}
 
 element_re = r"[A-Z][a-z]?(_[0-9]+)?"
 parenthesis_re = r"\(.*\)(_[0-9]+)?"
 
-for ind, i  in enumerate(reactants):
+for ind, i in enumerate(reactants):
     symbol = string.ascii_lowercase[ind]
     term = [i]
     a = 1
     while a:
         a = re.match(parenthesis_re, term[-1])
         if a:
-            remainder = term[-1][term[-1].find(a.group())+ len(a.group()):]
+            remainder = term[-1][term[-1].find(a.group()) + len(a.group()):]
             if len(term[-1][:term[0].find(a.group())]) > 0:
                 term[-1] = term[-1][:term[-1].find(a.group())]
                 term += [a.group()]
@@ -60,11 +61,13 @@ for ind, i  in enumerate(reactants):
     for j in term:
         segment = j
         if re.match(parenthesis_re, segment):
-            mult = int(segment[segment[segment.index(")"):].index('_') + segment.index(")")+1:])
+            closep_loc = segment.index(")")
+            loc2 = segment[closep_loc:].index('_') + segment.index(")")+1
+            mult = int(segment[loc2:])
             segment = re.match("\(.*\)", segment).group()[1:-1]
         else:
             mult = 1
-        a=1
+        a = 1
         while a:
             a = re.match(element_re, segment)
             if not a:
@@ -84,14 +87,14 @@ for ind, i  in enumerate(reactants):
                 else:
                     counts[name] = [[symbol, mult]]
 
-for ind, i  in enumerate(products):
+for ind, i in enumerate(products):
     symbol = string.ascii_lowercase[ind+len(reactants)]
     term = [i]
     a = 1
     while a:
         a = re.match(parenthesis_re, term[-1])
         if a:
-            remainder = term[-1][term[-1].find(a.group())+ len(a.group()):]
+            remainder = term[-1][term[-1].find(a.group()) + len(a.group()):]
             if len(term[-1][:term[0].find(a.group())]) > 0:
                 term[-1] = term[-1][:term[-1].find(a.group())]
                 term += [a.group()]
@@ -106,11 +109,13 @@ for ind, i  in enumerate(products):
     for j in term:
         segment = j
         if re.match(parenthesis_re, segment):
-            mult = int(segment[segment[segment.index(")"):].index('_') + segment.index(")")+1:])
+            closep_loc = segment.index(")")
+            loc2 = segment[closep_loc:].index('_') + segment.index(")")+1
+            mult = int(segment[loc2:])
             segment = re.match("\(.*\)", segment).group()[1:-1]
         else:
             mult = 1
-        a=1
+        a = 1
         while a:
             a = re.match(element_re, segment)
             if not a:
@@ -128,11 +133,11 @@ for ind, i  in enumerate(products):
                 if name in counts.keys():
                     counts[name].append([symbol, -1 * mult])
                 else:
-                    counts[name] = [[symbol, -1* mult]]
+                    counts[name] = [[symbol, -1 * mult]]
 
 eq = []
 for i in counts.keys():
-    temp_eq=''
+    temp_eq = ''
     for j in counts[i]:
         temp_eq += str(j[1]) + " * " + j[0] + " + "
     eq.append(temp_eq[:-2])
@@ -140,7 +145,7 @@ for i in counts.keys():
 
 eq = map(Eq, map(sympify, eq))
 
-sol=solve(eq)
+sol = solve(eq)
 
 
 results = {}
@@ -152,8 +157,8 @@ while True:
     for i in sol.keys():
         tempct = ct
         while 1:
-            res = sympify(sol[i]).subs(s, ct)   
-            if res%1 == 0:
+            res = sympify(sol[i]).subs(s, ct)
+            if res % 1 == 0:
                 break
             ct += 1
         if tempct != ct:
